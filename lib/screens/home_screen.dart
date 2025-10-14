@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:vitalvision/screens/emergency_screen.dart';
 import 'camera_screen.dart';
-import 'dart:async';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -11,35 +12,40 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _isOnline = true;
-  Timer? _connectionTimer;
+  late final Connectivity _connectivity;
+  late final Stream<ConnectivityResult> _connectivityStream;
 
   @override
   void initState() {
     super.initState();
-    _checkConnection();
-  }
+    _connectivity = Connectivity();
+    _connectivityStream = _connectivity.onConnectivityChanged;
 
-  void _checkConnection() {
-    _connectionTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    _connectivityStream.listen((ConnectivityResult result) {
       if (mounted) {
         setState(() {
-          _isOnline = true;
+          _isOnline = result != ConnectivityResult.none;
         });
       }
     });
+
+    _checkInitialConnection();
   }
 
-  @override
-  void dispose() {
-    _connectionTimer?.cancel();
-    super.dispose();
+  Future<void> _checkInitialConnection() async {
+    final result = await _connectivity.checkConnectivity();
+    if (mounted) {
+      setState(() {
+        _isOnline = result != ConnectivityResult.none;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final padding = MediaQuery.of(context).padding;
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: Column(
@@ -97,15 +103,16 @@ class _HomeScreenState extends State<HomeScreen> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: _isOnline 
-                              ? const Color(0xFF10B981).withOpacity(0.9)
-                              : Colors.orange.withOpacity(0.9),
+                            color: _isOnline
+                                ? const Color(0xFF10B981).withOpacity(0.9)
+                                : Colors.orange.withOpacity(0.9),
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: (_isOnline 
-                                  ? const Color(0xFF10B981)
-                                  : Colors.orange).withOpacity(0.4),
+                                color: (_isOnline
+                                        ? const Color(0xFF10B981)
+                                        : Colors.orange)
+                                    .withOpacity(0.4),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -133,7 +140,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const EmergencyScreen(),
+                              ),
+                            );
+                          },
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                           icon: const Icon(
@@ -203,15 +217,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Detección automática con IA - PRINCIPAL
                     _AICameraDetectionCard(size: size),
                     const SizedBox(height: 20),
-
-                    // Botón de emergencia Cusco
                     _EmergencyCallButton(size: size),
                     const SizedBox(height: 28),
-
-                    // Selección manual
                     const Text(
                       'O selecciona manualmente',
                       style: TextStyle(
@@ -221,8 +230,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    // Grid de emergencias
                     _EmergencyGrid(size: size),
                   ],
                 ),
@@ -233,12 +240,17 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
 }
 
 // Card principal de detección con IA
 class _AICameraDetectionCard extends StatelessWidget {
   final Size size;
-  
+
   const _AICameraDetectionCard({required this.size});
 
   @override
@@ -272,7 +284,6 @@ class _AICameraDetectionCard extends StatelessWidget {
               MaterialPageRoute(builder: (context) => const CameraScreen()),
             );
           },
-
           borderRadius: BorderRadius.circular(24),
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -363,10 +374,10 @@ class _AICameraDetectionCard extends StatelessWidget {
   }
 }
 
-// Botón de llamada de emergencia - CUSCO
+// Botón de llamada de emergencia
 class _EmergencyCallButton extends StatelessWidget {
   final Size size;
-  
+
   const _EmergencyCallButton({required this.size});
 
   @override
@@ -389,16 +400,10 @@ class _EmergencyCallButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            // Llamar al 116 (Emergencias Cusco)
-            _showEmergencyDialog(context);
-          },
+          onTap: () => _showEmergencyDialog(context),
           borderRadius: BorderRadius.circular(18),
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 16,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -481,26 +486,26 @@ class _EmergencyCallButton extends StatelessWidget {
         ),
         content: SingleChildScrollView(
           child: ListBody(
-            children: [
+            children: const [
               _EmergencyOption(
                 icon: Icons.health_and_safety,
                 title: 'SAMU - Emergencias Médicas',
                 number: '116',
-                color: const Color(0xFFEF4444),
+                color: Color(0xFFEF4444),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               _EmergencyOption(
                 icon: Icons.local_fire_department,
                 title: 'Bomberos Cusco',
                 number: '116',
-                color: const Color(0xFFF97316),
+                color: Color(0xFFF97316),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               _EmergencyOption(
                 icon: Icons.local_police,
                 title: 'Policía Nacional',
                 number: '105',
-                color: const Color(0xFF3B82F6),
+                color: Color(0xFF3B82F6),
               ),
             ],
           ),
@@ -573,64 +578,37 @@ class _EmergencyOption extends StatelessWidget {
 // Grid de emergencias manuales
 class _EmergencyGrid extends StatelessWidget {
   final Size size;
-  
+
   const _EmergencyGrid({required this.size});
 
   @override
   Widget build(BuildContext context) {
     final emergencies = [
-      {
-        'icon': Icons.water_drop_outlined,
-        'title': 'Heridas y\nSangrado',
-        'color': const Color(0xFFEF4444),
-      },
-      {
-        'icon': Icons.local_fire_department_outlined,
-        'title': 'Quemaduras',
-        'color': const Color(0xFFF97316),
-      },
-      {
-        'icon': Icons.air,
-        'title': 'Atraganta-\nmiento',
-        'color': const Color(0xFF8B5CF6),
-      },
-      {
-        'icon': Icons.person_off_outlined,
-        'title': 'Desmayo',
-        'color': const Color(0xFF3B82F6),
-      },
-      {
-        'icon': Icons.favorite_border,
-        'title': 'RCP',
-        'color': const Color(0xFFDC2626),
-      },
-      {
-        'icon': Icons.medical_information_outlined,
-        'title': 'Otras\nEmergencias',
-        'color': const Color(0xFF10B981),
-      },
+      {'icon': Icons.water_drop_outlined, 'title': 'Corte', 'color': const Color(0xFFEF4444)},
+      {'icon': Icons.healing, 'title': 'Raspón', 'color': const Color(0xFFEF4444)},
+      {'icon': Icons.circle, 'title': 'Moretón', 'color': const Color(0xFF8B5CF6)},
+      {'icon': Icons.local_fire_department, 'title': 'Quemadura', 'color': const Color(0xFFF97316)},
+      {'icon': Icons.bug_report, 'title': 'Picadura', 'color': const Color(0xFF8B5CF6)},
+      {'icon': Icons.person_off, 'title': 'Desmayo', 'color': const Color(0xFF3B82F6)},
+      {'icon': Icons.no_food, 'title': 'Atragantamiento', 'color': const Color(0xFFDC2626)},
     ];
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 1.0,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
-          itemCount: emergencies.length,
-          itemBuilder: (context, index) {
-            final emergency = emergencies[index];
-            return _EmergencyCard(
-              icon: emergency['icon'] as IconData,
-              title: emergency['title'] as String,
-              color: emergency['color'] as Color,
-            );
-          },
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 1.0,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: emergencies.length,
+      itemBuilder: (context, index) {
+        final e = emergencies[index];
+        return _EmergencyCard(
+          icon: e['icon'] as IconData,
+          title: e['title'] as String,
+          color: e['color'] as Color,
         );
       },
     );
@@ -666,9 +644,7 @@ class _EmergencyCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            // Navegar a guía específica
-          },
+          onTap: () {},
           borderRadius: BorderRadius.circular(18),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
@@ -681,11 +657,7 @@ class _EmergencyCard extends StatelessWidget {
                     color: color.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(
-                    icon,
-                    color: color,
-                    size: 32,
-                  ),
+                  child: Icon(icon, color: color, size: 32),
                 ),
                 const SizedBox(height: 10),
                 Text(

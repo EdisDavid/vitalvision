@@ -1,2 +1,9 @@
-quemaduras
-raspones
+otro
+normal
+corte
+raspon
+moreton
+quemadura
+picadura
+desmayo
+atragantamiento
