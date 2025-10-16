@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:vitalvision/screens/emergency_screen.dart';
 import 'camera_screen.dart';
+import 'recommendation_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -50,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: const Color(0xFFF5F7FA),
       body: Column(
         children: [
+          const RecommendationWidget(),
           // Encabezado con estado de conexión
           Container(
             width: double.infinity,

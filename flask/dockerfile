@@ -1,0 +1,12 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+COPY aid.py /app
+COPY requiriments.txt /app
+
+RUN pip install --no-cache-dir -r requiriments.txt
+
+EXPOSE 5000
+
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "aid:app"]

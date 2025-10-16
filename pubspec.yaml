@@ -17,10 +17,12 @@ dependencies:
 
   # Icons iOS
   cupertino_icons: ^1.0.8
+  http: ^1.1.0
 
   # Cámara en tiempo real para detección
   camera: ^0.11.1
 
+  
   # TensorFlow Lite para IA offline
   tflite_flutter: ^0.10.0
 
