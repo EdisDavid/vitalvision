@@ -1,0 +1,6 @@
+# Ignorar archivos y carpetas innecesarias
+Flask/__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.git
