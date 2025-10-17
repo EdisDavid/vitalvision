@@ -1,1 +1,1 @@
-web: gunicorn --bind 0.0.0.0:5000 Flask.aid:app
+web: docker-compose up --build
